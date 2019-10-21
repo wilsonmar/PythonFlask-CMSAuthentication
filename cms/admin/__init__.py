@@ -1,17 +1,54 @@
-from flask import Blueprint, render_template, abort, request, redirect, url_for, flash
+from flask import Blueprint, render_template, abort, request, redirect, url_for, flash, g
 
 from cms.admin.models import Content, Type, User, Setting, db
 from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='templates')
 
+def authenticated(route_function):
+    @wraps(route_function)
+    def wrapped_route_function(**kwargs):
+        if g.user is None:
+            return redirect(url_for("admin.login"))
+        return route_function(**kwargs)
+    return wrapped_route_function
+
+@admin_bp.before_app_request
+def load_user():
+    user_id = session.get("user_id")
+    g.user = User.query.get(user_id) if user_id is not None else None
+
+@admin_bp.route("/login", methods=("GET", "POST"))
+def login():
+    if request.method == "POST":
+        user = User.query.filter_by(username=username).first()
+        username = request.form["username"]
+        password = request.form["password"]
+        error = None
+
+        if user is None:
+            error = "Incorrect username."
+        elif not user.check_password(password):
+            error = "Incorrect password."
+
+        if error is None:
+            session.clear()
+            session["user_id"] = user.id
+            return redirect(url_for("admin.content", type="page"))
+
+        flash(error)
+
+    return render_template("admin/login.html")
+
+@admin_bp.route("/logout")
+def logout():
+    """Clear the current session, including the stored user id."""
+    session.clear()
+    return redirect(url_for("admin.login"))
+
 def requested_type(type):
     types = [row.name for row in Type.query.all()]
     return True if type in types else False
-
-@admin_bp.route('/login', methods=('GET', 'POST'))
-def login():
-    return render_template('admin/login.html', title='Login')
 
 @admin_bp.route('/', defaults={'type': 'page'})
 @admin_bp.route('/<type>')

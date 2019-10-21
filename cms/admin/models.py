@@ -1,5 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy.ext.hybrid import hybrid_property
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
 
 db = SQLAlchemy()
 
@@ -28,3 +31,15 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     firstname = db.Column(db.String(100), unique=True, nullable=False)
     lastname = db.Column(db.String(100), unique=True, nullable=False)
+    _password = db.Column("password", db.String, nullable=False)
+
+    @hybrid_property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, value):
+        self._password = generate_password_hash(value)
+
+    def check_password(self, value):
+        return check_password_hash(self.password, value)
