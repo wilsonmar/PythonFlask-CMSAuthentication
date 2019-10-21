@@ -9,6 +9,10 @@ def requested_type(type):
     types = [row.name for row in Type.query.all()]
     return True if type in types else False
 
+@admin_bp.route('/login', methods=('GET', 'POST'))
+def login():
+    return render_template('admin/login.html', title='Login')
+
 @admin_bp.route('/', defaults={'type': 'page'})
 @admin_bp.route('/<type>')
 def content(type):
