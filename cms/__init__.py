@@ -1,4 +1,10 @@
+import click
+from flask.cli import with_appcontext
+
+from werkzeug.security import generate_password_hash
+
 from flask import Flask, render_template, abort
+from flask_migrate import Migrate
 
 from cms.admin.models import Content, Type, User, Setting, db
 from cms.admin import admin_bp
@@ -12,6 +18,31 @@ app.config['SECRET_KEY'] = 'b2de7FkqvkMyqzNFzxCkgnPKIGP6i4Rc'
 
 ## Models
 db.init_app(app)
+migrate = Migrate(app, db)
+
+@click.command("add-content")
+@with_appcontext
+def add_content():
+    objects = [
+        Type(name='page'),
+        Type(name='post'),
+        Type(name='template'),
+        Type(name='partial'),
+        Content(title='Home', slug='home', type_id=1, body='Home'),
+        Content(title='About', slug='about', type_id=1, body='About'),
+        Content(title='Contact Us', slug='contact-us', type_id=1, body='Contact Us')]
+    db.session.bulk_save_objects(objects)
+    db.session.commit()
+app.cli.add_command(add_content)
+
+@click.command("add-user")
+@with_appcontext
+def add_user():
+    user =
+        User(username='psdemo', email='psdemo@example.com', firstname='PS', lastname='Demo', password=generate_password_hash('psdemo'))
+    db.session.add(user)
+    db.session.commit()
+app.cli.add_command(add_user)
 #!
 
 ## Admin Routes

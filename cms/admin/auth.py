@@ -20,10 +20,12 @@ def load_user():
 @admin_bp.route("/login", methods=("GET", "POST"))
 def login():
     if request.method == "POST":
-        user = User.query.filter_by(username=username).first()
+        
         username = request.form["username"]
         password = request.form["password"]
         error = None
+        
+        user = User.query.filter_by(username=username).first()
 
         if user is None:
             error = "Incorrect username."
