@@ -1,3 +1,4 @@
+## Imports
 import click
 from flask.cli import with_appcontext
 
@@ -8,6 +9,7 @@ from flask_migrate import Migrate
 
 from cms.admin.models import Content, Type, User, Setting, db
 from cms.admin import admin_bp
+#!
 
 ## Application Configuration
 app = Flask(__name__)
