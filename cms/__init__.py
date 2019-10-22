@@ -38,8 +38,7 @@ app.cli.add_command(add_content)
 @click.command("add-user")
 @with_appcontext
 def add_user():
-    user =
-        User(username='psdemo', email='psdemo@example.com', firstname='PS', lastname='Demo', password=generate_password_hash('psdemo'))
+    user = User(username='psdemo', email='psdemo@example.com', firstname='PS', lastname='Demo', password=generate_password_hash('psdemo'))
     db.session.add(user)
     db.session.commit()
 app.cli.add_command(add_user)
