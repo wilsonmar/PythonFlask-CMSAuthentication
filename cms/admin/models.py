@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+# TASK(01)
 from werkzeug.security import check_password_hash
 
 db = SQLAlchemy()
@@ -29,11 +30,11 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     firstname = db.Column(db.String(100), unique=True, nullable=False)
     lastname = db.Column(db.String(100), unique=True, nullable=False)
-    # TASK(16)
+    # TASK(01)
     password = db.Column(db.String, nullable=False)
-    # TASK(17)
+    # TASK(02)
     def check_password(self, value):
         return check_password_hash(self.password, value)
-    # TASK(18) flask db init
-    # TASK(18) flask db migrate
-    # TASK(18) flask db upgrade
+    # TASK(03) flask db init
+    # TASK(03) flask db migrate
+    # TASK(03) flask db upgrade
