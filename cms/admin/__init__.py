@@ -4,7 +4,7 @@ from cms.admin.models import Content, Type, User, Setting, db
 from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='templates')
-
+# TASK(18)
 from cms.admin import auth
 
 def requested_type(type):
@@ -13,6 +13,7 @@ def requested_type(type):
 
 @admin_bp.route('/', defaults={'type': 'page'})
 @admin_bp.route('/<type>')
+# TASK(18)
 @auth.protected
 def content(type):
     if requested_type(type):
@@ -22,6 +23,7 @@ def content(type):
         abort(404)
 
 @admin_bp.route('/create/<type>', methods=('GET', 'POST'))
+# TASK(18)
 @auth.protected
 def create(type):
     if requested_type(type):
@@ -51,6 +53,7 @@ def create(type):
         abort(404)
 
 @admin_bp.route('/edit/<id>', methods=('GET', 'POST'))
+# TASK(18)
 @auth.protected
 def edit(id):
     content = Content.query.get_or_404(id)
@@ -78,12 +81,14 @@ def edit(id):
     return render_template('admin/content_form.html', types=types, title='Edit', item_title=content.title, slug=content.slug, type_name=type.name, type_id=content.type_id, body=content.body)
 
 @admin_bp.route('/users')
+# TASK(18)
 @auth.protected
 def users():
     users = User.query.all()
     return render_template('admin/users.html', title='Users', users=users)
 
 @admin_bp.route('/settings')
+# TASK(18)
 @auth.protected
 def settings():
     settings = Setting.query.all()
