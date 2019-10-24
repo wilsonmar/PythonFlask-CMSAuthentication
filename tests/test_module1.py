@@ -27,8 +27,6 @@ auth_code = get_source_code(auth)
 #!
 
 ## Tests
-@pytest.mark.test__module1
-def test__module1():
 @pytest.mark.test_models_password_column_module1
 def test_models_password_column_module1():
     assert False
