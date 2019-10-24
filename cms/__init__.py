@@ -32,18 +32,11 @@ def add_content():
         Type(name='partial'),
         Content(title='Home', slug='home', type_id=1, body='Home'),
         Content(title='About', slug='about', type_id=1, body='About'),
-        Content(title='Contact Us', slug='contact-us', type_id=1, body='Contact Us')]
+        Content(title='Contact Us', slug='contact-us', type_id=1, body='Contact Us'),
+        User(username='psdemo', email='psdemo@example.com', firstname='PS', lastname='Demo', password=generate_password_hash('psdemo'))]
     db.session.bulk_save_objects(objects)
     db.session.commit()
 app.cli.add_command(add_content)
-
-@click.command("add-user")
-@with_appcontext
-def add_user():
-    user = User(username='psdemo', email='psdemo@example.com', firstname='PS', lastname='Demo', password=generate_password_hash('psdemo'))
-    db.session.add(user)
-    db.session.commit()
-app.cli.add_command(add_user)
 #!
 
 ## Admin Routes

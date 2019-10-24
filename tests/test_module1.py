@@ -108,6 +108,7 @@ def test_database_migration_module1():
     # > flask db init
     # > flask db migrate
     # > flask db upgrade
+    # > flask add-content
     assert False
 
 """
