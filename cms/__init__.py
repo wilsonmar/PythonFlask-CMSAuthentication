@@ -36,6 +36,7 @@ def add_content():
         User(username='psdemo', email='psdemo@example.com', firstname='PS', lastname='Demo', password=generate_password_hash('psdemo'))]
     db.session.bulk_save_objects(objects)
     db.session.commit()
+    print('Content added to the database.')
 app.cli.add_command(add_content)
 #!
 
