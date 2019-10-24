@@ -45,3 +45,7 @@ def simplify(main):
     buf = []
     _simplify(main)
     return ''.join(buf)
+
+def get_imports(code, value):
+    imports = code.find_all('from_import',  lambda node: ''.join(list(node.value.node_list.map(lambda node: str(node)))) == value).find_all('name_as_name')
+    return list(imports.map(lambda node: node.value))
