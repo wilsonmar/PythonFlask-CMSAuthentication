@@ -38,7 +38,7 @@ def test_models_check_password_module1():
     # 2. Models - Check Password
     # from werkzeug.security import check_password_hash
     # def check_password(self, value):
-    #         return check_password_hash(self.password, value)
+    #     return check_password_hash(self.password, value)
     assert False
 
 @pytest.mark.test_database_migration_module1
@@ -77,7 +77,7 @@ def test_auth_wrapped_function_module1():
 def test_auth_redirect_user_module1():
     # 7. Auth - Redirect User
     # if g.user is None:
-    #      return redirect(url_for('admin.login'))
+    #     return redirect(url_for('admin.login'))
     assert False
 
 @pytest.mark.test_auth_load_user_module1
@@ -128,7 +128,6 @@ def test_auth_store_user_in_session_module1():
     #     session.clear()
     #     session['user_id'] = user.id
     #     return redirect(url_for('admin.content', type='page'))
-    # 
     # flash(error)
     assert False
 
