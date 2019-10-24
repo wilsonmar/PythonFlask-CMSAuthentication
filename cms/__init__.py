@@ -64,7 +64,7 @@ def index(slug):
     titles = Content.query.with_entities(Content.slug, Content.title).join(Type).filter(Type.name == 'page')
     content = Content.query.filter(Content.slug == slug).first_or_404()
     return render_template('index.html', titles=titles, content=content)
-#!
-
+    
 if __name__ == "__main__":
     app.run(debug=True)
+#!
