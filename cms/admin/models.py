@@ -40,3 +40,4 @@ class User(db.Model):
     # TASK(03) flask db init
     # TASK(03) flask db migrate
     # TASK(03) flask db upgrade
+    # TASK(03) flask add-content
