@@ -27,6 +27,9 @@ login_template = template_data('login')
 def get_source_code(file_path):
     with open(file_path.resolve(), 'r') as source_code:
         return RedBaron(source_code.read())
+
+def rq(string):
+    return re.sub(r'(\'|")', '', str(string))
 #!
 
 ## Source Code
@@ -269,16 +272,90 @@ def test_auth_load_user_module1():
     # def load_user():
     #     user_id = session.get('user_id')
     #     g.user = User.query.get(user_id) if user_id is not None else None
-    assert False
+    load_user = auth_code.find('def', name='load_user')
+    load_user_exists = load_user is not None
+    assert load_user_exists, \
+        'Have you created a function called `load_user`?'
+    type = load_user.find('assign', lambda node: \
+        node.target.value == 'user_id')
+    type_exists = type is not None
+    assert type_exists, \
+        'Are you setting the `user_id` variable correctly?'
+    get_call = type.find('atomtrailers', lambda node: \
+        node.value[0].value == 'session' and \
+        node.value[1].value == 'get' and \
+        node.value[2].type == 'call'
+        )
+    get_call_exists = get_call is not None
+    assert get_call_exists, \
+        'Are you calling the `session.get()` function and assigning the result to `user_id`?'
+    get_argument = get_call.find('call_argument', lambda node: \
+        str(node.value.value).replace("'", '"') == '"user_id"'  
+    ) is not None
+    assert get_argument, \
+        'Are you passing the `session.get()` function the correct argument?'
+    
+    ternary_if = get_conditional(load_user, ['user_id:is:not:None', 'user_id:!=:None'], 'ternary_operator') 
+    ternary_if_exists = ternary_if is not None
+    assert ternary_if_exists, \
+        'Do you have a ternary `if` statement to set `g.user`?'
 
-"""
+    ternary_parent = ternary_if.parent
+    ternary_parent_exists = ternary_parent is not None
+    assert ternary_parent_exists, \
+        'Do you have a ternary `if` statement to set `g.user`?'
+    
+    ternary_assignment = ternary_parent.parent
+    ternary_assignment_exists = ternary_assignment is not None
+    assert ternary_assignment_exists, \
+        'Do you have an assignment statement that sets `g.user`?'
+        
+    if_branch = ternary_parent.first.find('atomtrailers', lambda node: \
+        node.value[0].value == 'User' and \
+        node.value[1].value == 'query' and \
+        node.value[2].value == 'get' and \
+        node.value[3].type == 'call' and \
+        node.value[3].value[0].value.value == 'user_id') is not None
+    else_branch = ternary_parent.second.value == 'None'
+    final_assignment = ternary_assignment.find('atomtrailers', lambda node: \
+        node.value[0].value == 'g' and \
+        node.value[1].value == 'user') is not None
+    
+    g_user_assignment = final_assignment and if_branch and final_assignment
+    assert g_user_assignment, \
+        'Do you have an assignment statement that sets `g.user` to the user_id from the database or `None`?'
+
 @pytest.mark.test_auth_login_route_module1
 def test_auth_login_route_module1():
     # 9. Auth - Login Route
     # @admin_bp.route('/login', methods=('GET', 'POST'))
     # def login():
     #     return render_template('admin/login.html')
-    assert False
+    login_decorator = get_route(auth_code, 'login').find('dotted_name', lambda node: \
+        node.value[0].value == 'admin_bp' and \
+        node.value[1].type == 'dot' and \
+        node.value[2].value == 'route' and \
+        node.parent.call.type == 'call' and \
+        rq(node.parent.call.value[0].value.value) == '/login') is not None
+    assert login_decorator, \
+        'Have you add a route decorator to the `login` route function? Are you passing the correct route pattern?'
+
+    strings = list(get_methods_keyword(auth_code, 'login').find_all('string').map(lambda node: node.value.replace("'", '"')))
+    post_check = '"GET"' in strings and '"POST"' in strings
+    assert post_check, \
+        'Have you added the `methods` keyword argument to the `edit` route allowing `POST` and `GET`?'
+        
+    return_render = get_route(auth_code, 'login').find('return', lambda node: \
+        node.value[0].value == 'render_template' and \
+        node.value[1].type == 'call')
+    return_render_exists = return_render is not None
+    assert return_render_exists, \
+        'Are you returning a call to the `render_template()` function?'
+
+    return_render_args = list(return_render.find_all('call_argument').map(lambda node: str(node.target) + ':' + str(node.value).replace("'", '"')))
+    template_exists = 'None:"admin/login.html"' in return_render_args
+    assert template_exists, \
+        'Are you passing the correct HTML template to the `render_template()` function?'
 
 @pytest.mark.test_auth_post_request_module1
 def test_auth_post_request_module1():
@@ -288,7 +365,8 @@ def test_auth_post_request_module1():
     #     password = request.form['password']
     #     error = None
     assert False
-
+    
+"""
 @pytest.mark.test_auth_get_user_module1
 def test_auth_get_user_module1():
     # 11. Auth - Get User

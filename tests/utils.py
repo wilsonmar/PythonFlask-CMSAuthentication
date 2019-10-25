@@ -53,7 +53,7 @@ def get_imports(code, value):
 def get_conditional(code, values, type, nested=False):
     def flat(node):
         if node.type == 'comparison':
-            return '{}:{}:{}'.format(str(node.first).replace("'", '"'), str(node.value), str(node.second).replace("'", '"'))
+            return '{}:{}:{}'.format(str(node.first).replace("'", '"'), str(node.value).replace(' ', ':'), str(node.second).replace("'", '"'))
         elif node.type == 'unitary_operator':
             return '{}:{}'.format(str(node.value), str(node.target).replace("'", '"'))
 
@@ -63,3 +63,26 @@ def get_conditional(code, values, type, nested=False):
         if final_node is not None:
             return final_node
     return None
+
+def get_route(code, route):
+    route_function = code.find('def', name=route)
+    route_function_exists = route_function is not None
+    assert route_function_exists, \
+        'Does the `{}` route function exist in `cms/admin/__init__.py`?'.format(route)
+    return route_function
+
+def get_methods_keyword(code, route):
+    methods_keyword = get_route(code, route).find_all('call_argument', lambda node: \
+        str(node.target) == 'methods')
+    methods_keyword_exists = methods_keyword is not None
+    assert methods_keyword_exists, \
+        'Does the `{}` route have a keyword argument of `methods`?'.format(name)
+    return methods_keyword
+
+def get_request_method(code, route, parent=True):
+    request_method = get_route(code, route).find('comparison', lambda node: \
+        'request.method' in [str(node.first), str(node.second)])
+    request_method_exists = request_method is not None
+    assert request_method_exists, \
+        'Do you have an `if` statement in the `{}` route that checks `request.method`?'.format(route)
+    return request_method.parent if parent else request_method
