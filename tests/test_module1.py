@@ -383,6 +383,7 @@ def test_auth_post_request_module1():
 def test_auth_get_user_module1():
     # 11. Auth - Get User
     # user = User.query.filter_by(username=username).first()
+    # check = user.check_password(password)
     user = get_route(auth_code, 'login').find('assign', lambda node: \
         node.target.value == 'user')
     user_exists = user is not None
@@ -406,7 +407,19 @@ def test_auth_get_user_module1():
     first_call = len(filter_by.value) == 6 and filter_by.value[4].value == 'first' and filter_by.value[5].type == 'call'
     assert filter_by_argument, \
         'Have you a append a call to the `first()` on `User.query.filter_by()` ?'
-
+    check = get_route(auth_code, 'login').find('assign', lambda node: \
+        node.target.value == 'check')
+    check_exists = check is not None
+    assert check_exists, \
+        'Are you setting the `check` variable correctly?'
+    check_password_call = check.find('atomtrailers', lambda node: \
+        node.value[0].value == 'user' and \
+        node.value[1].value == 'check_password' and \
+        node.value[2].type == 'call' and \
+        node.value[2].value[0].value.value == 'password'
+        ) is not None
+    assert check_password_call, \
+        'Are you calling the `user.check_password()` function and assigning the result to `check`?'
 
 @pytest.mark.test_auth_validate_form_data_module1
 def test_auth_validate_form_data_module1():
@@ -415,9 +428,26 @@ def test_auth_validate_form_data_module1():
     #     error = 'Incorrect username.'
     # elif not user.check_password(password):
     #     error = 'Incorrect password.'
-    assert False
+    user_error = get_conditional(get_request_method(auth_code, 'login'), [ 'not:user', 'user:is:None', 'user:==:None', 'user:is:""', 'user:==:""'], 'if', True)
 
-"""
+    user_if_exists = user_error is not None
+    assert user_if_exists, \
+        'Do you have a nested `if` statement that tests if `user` is `not` empty.'
+    user_error_message = user_error.parent.find('assign', lambda node: node.target.value == 'error')
+    user_error_message_exists = user_error_message is not None and user_error_message.value.type == 'string'
+    assert user_error_message_exists, \
+        'Are you setting the `error` variable to the appropriate `string` in the `if` statement.'
+
+    check_error = get_conditional(get_request_method(auth_code, 'login'), ['not:check', 'check:is:None', 'check:==:None', 'check:is:""', 'check:==:""'], 'elif', True)
+
+    check_elif_exists = check_error is not None
+    assert check_elif_exists, \
+        'Do you have an `elif` statement that tests if `check` is `not` empty?'
+    check_error_message = check_error.parent.find('assign', lambda node: node.target.value == 'error')
+    check_error_message_exists = check_error_message is not None and check_error_message.value.type == 'string'
+    assert check_error_message_exists, \
+        'Are you setting the `error` variable to the appropriate `string` in the `elif` statement.'
+
 @pytest.mark.test_auth_store_user_in_session_module1
 def test_auth_store_user_in_session_module1():
     # 13. Auth - Store User in Session
@@ -426,8 +456,65 @@ def test_auth_store_user_in_session_module1():
     #     session['user_id'] = user.id
     #     return redirect(url_for('admin.content', type='page'))
     # flash(error)
-    assert False
+    
+    error_check = get_request_method(auth_code, 'login').find('comparison', lambda node: \
+        'error' in [str(node.first), str(node.second)])
+    error_check_exists = error_check is not None and error_check.parent.type == 'if' and \
+        ((error_check.first.value == 'error' and error_check.second.value == 'None') or \
+        (error_check.first.value == 'None' and error_check.second.value == 'error')) and \
+        (error_check.value.first == '==' or error_check.value.first == 'is')
+    assert error_check_exists, \
+        'Do you have an `if` statment that is checking if `error` is `None`?'
 
+    error_check_if = error_check.parent
+    clear_call = error_check_if.find('atomtrailers', lambda node: \
+        node.value[0].value == 'session' and \
+        node.value[1].value == 'clear' and \
+        node.value[2].type == 'call'
+        ) is not None
+    assert clear_call, \
+        'Are you calling the `session.clear()` function?'
+        
+    session_user = error_check_if.find('assign', lambda node: \
+        node.target.value[0].value == 'session' and \
+        rq(node.target.value[1].value.value) == 'user_id' and \
+        node.value.value[0].value == 'user' and \
+        node.value.value[1].value == 'id') is not None
+    assert session_user, \
+        'Are you setting the `user_id` `session` key to the value `user.id`?'
+        
+    return_redirect = error_check_if.find('return', lambda node: \
+        node.value[0].value == 'redirect' and \
+        node.value[1].type == 'call')
+    return_redirect_exists = return_redirect is not None
+    assert return_redirect_exists, \
+        'Are you returning a call to the `redirect()` function?'
+
+    url_for_call = return_redirect.find_all('atomtrailers', lambda node: \
+        node.value[0].value == 'url_for' and \
+        node.value[1].type == 'call')
+    url_for_call_exists = url_for_call is not None
+    assert url_for_call_exists, \
+        'Are you passing a call to the `url_for()` function to the `redirect()` function?'
+
+    url_for_args = list(url_for_call.find_all('call_argument').map(lambda node: \
+        str(node.target) + ':' + str(node.value).replace("'", '"')))
+    url_content = 'None:"admin.content"' in url_for_args
+    assert url_content, \
+        "Are you passing the `'admin.content'` to the `url_for()` function?"
+        
+    url_type = 'type:"page"' in url_for_args
+    assert url_type, \
+        'Are you passing a `type` keyword argument set to `type.name` to the `url_for()` function?'
+
+    flash_exists = get_request_method(auth_code, 'login').find('atomtrailers', lambda node: \
+        node.value[0].value == 'flash' and \
+        node.value[1].type == 'call' and \
+        node.value[1].value[0].value.value == 'error') is not None
+    assert flash_exists, \
+        'Are you flashing an `error` at the end of the `request.method` `if`?'
+    
+"""
 @pytest.mark.test_auth_logout_route_module1
 def test_auth_logout_route_module1():
     # 14. Auth - Logout Route

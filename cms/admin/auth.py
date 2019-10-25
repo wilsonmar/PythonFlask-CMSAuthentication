@@ -32,11 +32,12 @@ def login():
         error = None
         # TASK(11)
         user = User.query.filter_by(username=username).first()
+        check = user.check_password(password)
 
         # TASK(12)
         if user is None:
             error = 'Incorrect username.'
-        elif not user.check_password(password):
+        elif not check:
             error = 'Incorrect password.'
 
         # TASK(13)
