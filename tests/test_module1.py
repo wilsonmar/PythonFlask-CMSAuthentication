@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 from redbaron import RedBaron
 
-from tests.utils import simplify, get_imports, template_data
+from tests.utils import *
 #!
 
 ## Paths
@@ -220,8 +220,48 @@ def test_auth_redirect_user_module1():
     #         return redirect(url_for('admin.login'))
     #
     # return wrapped_route_function
-    assert False
-"""
+    def_protected = auth_code.find('def', lambda node: \
+        node.name == 'protected' and \
+        node.arguments[0].target.value == 'route_function')
+    wrapped = def_protected.find('def', name='wrapped_route_function')
+    wrapped_exists = wrapped is not None
+    assert wrapped_exists, \
+        'Have you create a function in the `protected` function called `wrapped_route_function`? Do you have the correct parameters?'
+    wrapped.find('decorator', lambda node: \
+        str(node.value) == 'wraps' and \
+        node.call.value[0].value.value == 'route_function')
+        
+    g_user = get_conditional(wrapped, ['g.user:is:None', 'g.user:==:None'], 'if')
+    g_user_exists = g_user is not None
+    assert g_user_exists, \
+        'Do you have an `if` statement that tests if `g.user` is `None`?'
+
+    return_redirect = g_user.parent.find('return', lambda node: \
+        node.value[0].value == 'redirect' and \
+        node.value[1].type == 'call')
+    return_redirect_exists = return_redirect is not None
+    assert return_redirect_exists, \
+        'Are you returning a call to the `redirect()` function in the `if` statement?'
+    
+    url_for_call = return_redirect.find_all('atomtrailers', lambda node: \
+        node.value[0].value == 'url_for' and \
+        node.value[1].type == 'call')
+    url_for_call_exists = url_for_call is not None
+    assert url_for_call_exists, \
+        'Are you passing a call to the `url_for()` function to the `redirect()` function?'
+    
+    url_for_args = list(url_for_call.find_all('call_argument').map(lambda node: str(node.target) + ':' + str(node.value.value).replace("'", '"')))
+    url_content = 'None:"admin.login"' in url_for_args
+    assert url_content, \
+        "Are you passing the `'admin.login'` route to the `url_for()` function?"
+    
+    wrapped_return = def_protected.find('return', lambda node: \
+        node.value.type == 'name' and \
+        node.value.value == 'wrapped_route_function')
+    wrapped_return_exists = wrapped_return is not None
+    assert wrapped_return_exists, \
+        'Are you returning the `wrapped_route_function` from the `protected` function?'
+
 @pytest.mark.test_auth_load_user_module1
 def test_auth_load_user_module1():
     # 8. Auth - Load User
@@ -231,6 +271,7 @@ def test_auth_load_user_module1():
     #     g.user = User.query.get(user_id) if user_id is not None else None
     assert False
 
+"""
 @pytest.mark.test_auth_login_route_module1
 def test_auth_login_route_module1():
     # 9. Auth - Login Route
