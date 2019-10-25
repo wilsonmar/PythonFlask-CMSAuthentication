@@ -456,7 +456,6 @@ def test_auth_store_user_in_session_module1():
     #     session['user_id'] = user.id
     #     return redirect(url_for('admin.content', type='page'))
     # flash(error)
-    
     error_check = get_request_method(auth_code, 'login').find('comparison', lambda node: \
         'error' in [str(node.first), str(node.second)])
     error_check_exists = error_check is not None and error_check.parent.type == 'if' and \
@@ -513,8 +512,7 @@ def test_auth_store_user_in_session_module1():
         node.value[1].value[0].value.value == 'error') is not None
     assert flash_exists, \
         'Are you flashing an `error` at the end of the `request.method` `if`?'
-    
-"""
+
 @pytest.mark.test_auth_logout_route_module1
 def test_auth_logout_route_module1():
     # 14. Auth - Logout Route
@@ -522,13 +520,61 @@ def test_auth_logout_route_module1():
     # def logout():
     #     session.clear()
     #     return redirect(url_for('admin.login'))
-    assert False
+    login_decorator = get_route(auth_code, 'logout').find('dotted_name', lambda node: \
+        node.value[0].value == 'admin_bp' and \
+        node.value[1].type == 'dot' and \
+        node.value[2].value == 'route' and \
+        node.parent.call.type == 'call' and \
+        rq(node.parent.call.value[0].value.value) == '/logout') is not None
+    assert login_decorator, \
+        'Have you add a route decorator to the `logout` route function? Are you passing the correct route pattern?'
+    
+    clear_call = get_route(auth_code, 'logout').find('atomtrailers', lambda node: \
+        node.value[0].value == 'session' and \
+        node.value[1].value == 'clear' and \
+        node.value[2].type == 'call'
+        ) is not None
+    assert clear_call, \
+        'Are you calling the `session.clear()` function?'
+    
+    return_redirect = get_route(auth_code, 'logout').find('return', lambda node: \
+        node.value[0].value == 'redirect' and \
+        node.value[1].type == 'call')
+    return_redirect_exists = return_redirect is not None
+    assert return_redirect_exists, \
+        'Are you returning a call to the `redirect()` function?'
+
+    url_for_call = return_redirect.find_all('atomtrailers', lambda node: \
+        node.value[0].value == 'url_for' and \
+        node.value[1].type == 'call')
+    url_for_call_exists = url_for_call is not None
+    assert url_for_call_exists, \
+        'Are you passing a call to the `url_for()` function to the `redirect()` function?'
+
+    url_for_args = list(url_for_call.find_all('call_argument').map(lambda node: str(node.target) + ':' + str(node.value.value).replace("'", '"')))
+    url_content = 'None:"admin.login"' in url_for_args
+    assert url_content, \
+        "Are you passing the `'admin.login'` route to the `url_for()` function?"
 
 @pytest.mark.test_admin_protect_routes_module1
 def test_admin_protect_routes_module1():
     # 15. Admin - Protect Routes
     # Protect all routes with the custom decorator.
+    # from cms.admin import auth
     # @auth.protected
-    assert False
+    admin_import = get_imports(admin_module_code, 'cms.admin')
+    admin_import_exits = admin_import is not None
+    assert admin_import_exits, \
+        'Do you have a `cms.admin` import statement?'
+    auth_exists = 'auth' in admin_import
+    assert auth_exists, \
+        'Are you importing `auth` from `cms.admin` in `cms/admin/__init__.py`?'
+    function_names = ['content', 'create', 'edit', 'settings', 'users']
+    decorators = list(admin_module_code.find_all('decorator', lambda node: \
+        str(node.value) == 'auth.protected').map(lambda node: node.parent.name))
+    decorators.sort()
+    decorators_exist = function_names == decorators
+    assert decorators_exist, \
+        'Have you added the `@auth.protected` decorator to the five route functions in `admin/__init.py`?'
+
 #!
-"""
