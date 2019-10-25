@@ -64,6 +64,9 @@ def get_conditional(code, values, type, nested=False):
             return final_node
     return None
 
+def rq(string):
+    return re.sub(r'(\'|")', '', str(string))
+
 def get_route(code, route):
     route_function = code.find('def', name=route)
     route_function_exists = route_function is not None
@@ -86,3 +89,46 @@ def get_request_method(code, route, parent=True):
     assert request_method_exists, \
         'Do you have an `if` statement in the `{}` route that checks `request.method`?'.format(route)
     return request_method.parent if parent else request_method
+
+def get_form_data(code, route, values, name):
+    index = list(get_request_method(code, route).find_all('atomtrailers', lambda node: \
+        node.parent.type == 'assignment' and \
+        node.value[0].value == 'request' and \
+        node.value[1].value == 'form' and \
+        node.value[2].type == 'getitem').map(lambda node: rq(node.value[2].value)))
+
+    get = list(get_request_method(code, route).find_all('atomtrailers', lambda node: \
+        node.value[0].value == 'request' and \
+        node.value[1].value == 'form' and \
+        node.value[2].value == 'get' and \
+        node.value[3].type == 'call').map(lambda node: rq(node.value[3].value[0].value)))
+
+    diff = list(set(index + get) - values)
+    diff_exists = len(diff) == 0
+    message = 'You have extra `request.form` statements. You can remove those for these varaibles {}'.format(diff)
+    assert diff_exists, message
+    
+    assignment = get_request_method(code, route).find('assign', lambda node: \
+        str(node.target) == name)
+    assignment_exists = assignment is not None
+    assert assignment_exists, \
+        'Do you have a variable named `{}`?'.format(name)
+    
+    name_as_string = '"{}"'.format(name.replace('content.', ''))
+    sub_name = '[{}]'.format(name_as_string)
+    
+    right = assignment.find('atomtrailers', lambda node: \
+        node.value[0].value == 'request' and \
+        node.value[1].value == 'form' and \
+        node.value[2].type == 'getitem' and \
+        node.value[2].find('string', lambda node: str(node.value).replace("'", '"') == name_as_string)) is not None
+    
+    right_get = assignment.find('atomtrailers', lambda node: \
+        node.value[0].value == 'request' and \
+        node.value[1].value == 'form' and \
+        node.value[2].value == 'get' and \
+        node.value[3].type == 'call' and \
+        node.value[3].find('string', lambda node: str(node.value).replace("'", '"') == name_as_string)) is not None
+    
+    assert right or right_get, \
+        'Are you setting the `{}` varaible to the correct form data?'.format(name)

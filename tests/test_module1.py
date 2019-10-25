@@ -27,9 +27,6 @@ login_template = template_data('login')
 def get_source_code(file_path):
     with open(file_path.resolve(), 'r') as source_code:
         return RedBaron(source_code.read())
-
-def rq(string):
-    return re.sub(r'(\'|")', '', str(string))
 #!
 
 ## Source Code
@@ -364,14 +361,52 @@ def test_auth_post_request_module1():
     #     username = request.form['username']
     #     password = request.form['password']
     #     error = None
-    assert False
+    post_check = str(get_request_method(auth_code, 'login', False)).find('POST')
+    assert post_check, \
+        'Are you testing if the request method is `POST`?'
+    try:
+        get_form_data(auth_code, 'login', {'username', 'password'}, 'username')
+        get_form_data(auth_code, 'login', {'username', 'password'}, 'password')
+    except:
+        assert False, 'Are you setting `username` and `password` with the correct form data?'
+        
+    error = get_request_method(auth_code, 'login').find('assign', lambda node: \
+        node.target.value == 'error')
+    error_exists = error is not None
+    assert error_exists, \
+        'Do you have a variable named `error`?'
+    error_none = error.value.to_python() is None
+    assert error_none, \
+        'Are you setting the `error` variable correctly?'
     
-"""
 @pytest.mark.test_auth_get_user_module1
 def test_auth_get_user_module1():
     # 11. Auth - Get User
     # user = User.query.filter_by(username=username).first()
-    assert False
+    user = get_route(auth_code, 'login').find('assign', lambda node: \
+        node.target.value == 'user')
+    user_exists = user is not None
+    assert user_exists, \
+        'Are you setting the `user` variable correctly?'
+    filter_by = user.find('atomtrailers', lambda node: \
+        node.value[0].value == 'User' and \
+        node.value[1].value == 'query' and \
+        node.value[2].value == 'filter_by' and \
+        node.value[3].type == 'call'
+        )
+    filter_by_exists = filter_by is not None
+    assert filter_by_exists, \
+        'Are you calling the `User.query.filter_by()` function and assigning the result to `user`?'
+
+    filter_by_argument = filter_by.find('call_argument', lambda node: \
+        node.target.value == 'username' and \
+        node.value.value == 'username') is not None
+    assert filter_by_argument, \
+        'Are you passing the correct keyword argument to the `User.query.filter_by()` function?'
+    first_call = len(filter_by.value) == 6 and filter_by.value[4].value == 'first' and filter_by.value[5].type == 'call'
+    assert filter_by_argument, \
+        'Have you a append a call to the `first()` on `User.query.filter_by()` ?'
+
 
 @pytest.mark.test_auth_validate_form_data_module1
 def test_auth_validate_form_data_module1():
@@ -382,6 +417,7 @@ def test_auth_validate_form_data_module1():
     #     error = 'Incorrect password.'
     assert False
 
+"""
 @pytest.mark.test_auth_store_user_in_session_module1
 def test_auth_store_user_in_session_module1():
     # 13. Auth - Store User in Session
