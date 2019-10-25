@@ -1,11 +1,12 @@
 ## Imports
 import pytest
 import re
+import sqlite3
 
 from pathlib import Path
 from redbaron import RedBaron
 
-from tests.utils import simplify, get_imports
+from tests.utils import simplify, get_imports, template_data
 #!
 
 ## Paths
@@ -13,6 +14,13 @@ admin = Path.cwd() / 'cms' / 'admin'
 admin_module = admin / '__init__.py'
 models = admin / 'models.py'
 auth = admin / 'auth.py'
+migrations = Path.cwd() / 'migrations'
+migrations_exists = Path.exists(migrations) and Path.is_dir(migrations)
+versions = migrations / 'versions'
+versions_exists = Path.exists(versions) and Path.is_dir(versions)
+content_db = Path.cwd() / 'cms' / 'content.db'
+content_db_exists = Path.exists(content_db) and Path.is_file(content_db)
+login_template = template_data('login')
 #!
 
 ## Module Functions
@@ -80,7 +88,7 @@ def test_models_check_password_module1():
     
     def_check_password_exists = def_check_password is not None
     assert def_check_password_exists, \
-        'Have you create a function in the `User` called `check_password`? Do you have the correct parameters set?'
+        'Have you create a function in the `User` called `check_password`? Do you have the correct parameters?'
         
     check_password_return = def_check_password.find('return', lambda node: \
         node.value[0].value == 'check_password_hash' and \
@@ -109,40 +117,111 @@ def test_database_migration_module1():
     # > flask db migrate
     # > flask db upgrade
     # > flask add-content
-    assert False
+    assert migrations_exists, \
+        'Have you run the `flask db init` command?'
+    versions_file_exists = versions_exists and len(list(versions.glob('*_.py'))) == 1 
+    assert versions_file_exists, \
+        'Have you run the `flask db migrate` command?'
+        
+    assert content_db_exists, \
+        'Have you run the `flask db upgrade` command?'
 
-"""
+    con = sqlite3.connect(content_db.resolve())
+    con.row_factory = lambda cursor, row: row[0]
+    cursor = con.cursor()
+    tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+    tables.sort()
+    tables_exist = tables == ['alembic_version', 'content', 'setting', 'type', 'user']
+    assert tables_exist, \
+        'Have you run the `flask db upgrade` command?'
+        
+    content_table = cursor.execute("SELECT COUNT() FROM content").fetchone()
+    user_table = cursor.execute("SELECT COUNT() FROM user").fetchone()
+    content_imported = content_table == 3 and user_table == 1
+    assert content_imported, \
+        'Have you run the `flask add-content` command?'
+
 @pytest.mark.test_template_login_form_module1
 def test_template_login_form_module1():
     # 4. Template - Login Form
     # <input type="text" class="input" name="username">
     # <input type="password" class="input" name="password">
     # <input type="submit" class="button is-link" value="Login">
-    assert False
+    username_exists = len(login_template.select('input[name="username"][class="input"][type="text"]')) == 1
+    assert username_exists, \
+        'Have you added an `<input>` with the correct attributes to the `Username` control `<div>`?'
+
+    password_exists = len(login_template.select('input[name="password"][class="input"][type="password"]')) == 1
+    assert password_exists, \
+        'Have you added an `<input>` with the correct attributes to the `Password` control `<div>`?'
+
+    submit_exists = len(login_template.select('input[type="submit"][value="Login"].button.is-link')) == 1
+    assert submit_exists, \
+        'Have you added a `submit` `<input>` with the correct attributes to the flast control `<div>`?'
+
+@pytest.mark.test_auth_imports_module1
+def test_auth_imports_module1():
+    # 5. Auth - Protected Decorator
+    # from functools import wraps
+    # from flask import session, g
+    functools_import = get_imports(auth_code, 'functools')
+    functools_import_exits = functools_import is not None
+    assert functools_import_exits, \
+        'Do you have a `functools` import statement?'
+    wraps_exists = 'wraps' in functools_import
+    assert wraps_exists, \
+        'Are you importing `wraps` from `functools` in `cms/admin/auth.py`?'
+    flask_import = get_imports(auth_code, 'flask')
+    flask_import_exits = flask_import is not None
+    assert flask_import_exits, \
+        'Do you have a `flask` import statement?'
+    g_exists = 'g' in flask_import
+    assert g_exists, \
+        'Are you importing `g` from `flask` in `cms/admin/auth.py`?'
+    session_exists = 'session' in flask_import
+    assert session_exists, \
+        'Are you importing `session` from `flask` in `cms/admin/auth.py`?'
 
 @pytest.mark.test_auth_protected_decorator_module1
 def test_auth_protected_decorator_module1():
-    # 5. Auth - Protected Decorator
-    # from functools import wraps
+    # 6. Auth - Protected Decorator
     # def protected(route_function):
-    #     @wraps(route_function)
-    assert False
-
-@pytest.mark.test_auth_wrapped_function_module1
-def test_auth_wrapped_function_module1():
-    # 6. Auth - Wrapped Function
-    # def wrapped_route_function(**kwargs):
-    #     return route_function(**kwargs)
-    # return wrapped_route_function
-    assert False
+    #     def wrapped_route_function(**kwargs):
+    #         return route_function(**kwargs)
+    def_protected = auth_code.find('def', lambda node: \
+        node.name == 'protected' and \
+        node.arguments[0].target.value == 'route_function')
+    def_protected_exists = def_protected is not None
+    assert def_protected_exists, \
+        'Have you create a function at the top of `auth.py` called `protected`? Do you have the correct parameters?'
+    wrapped = def_protected.find('def', lambda node: \
+        node.name == 'wrapped_route_function' and \
+        node.arguments[0].type == 'dict_argument' and \
+        node.arguments[0].value.value == 'kwargs')
+    wrapped_exists = wrapped is not None
+    assert wrapped_exists, \
+        'Have you create a function in the `protected` function called `wrapped_route_function`? Do you have the correct parameters?'
+    wrapped_return = wrapped.find('return', lambda node: \
+        node.value.type == 'atomtrailers' and \
+        node.value.value[0].value == 'route_function' and \
+        node.value.value[1].type == 'call' and \
+        node.value.value[1].value[0].type == 'dict_argument' and \
+        node.value.value[1].value[0].value.value == 'kwargs')
+    wrapped_return_exists = wrapped_return is not None
+    assert wrapped_return_exists, \
+        'Are you returning a call to the `route_function` function in the body of the `wrapped_route_function` function?'    
 
 @pytest.mark.test_auth_redirect_user_module1
 def test_auth_redirect_user_module1():
     # 7. Auth - Redirect User
-    # if g.user is None:
-    #     return redirect(url_for('admin.login'))
+    # @wraps(route_function)
+    #
+    #     if g.user is None:
+    #         return redirect(url_for('admin.login'))
+    #
+    # return wrapped_route_function
     assert False
-
+"""
 @pytest.mark.test_auth_load_user_module1
 def test_auth_load_user_module1():
     # 8. Auth - Load User

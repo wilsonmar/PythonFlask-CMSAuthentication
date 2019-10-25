@@ -4,24 +4,17 @@ from flask import render_template, request, redirect, url_for, flash
 
 # TASK(05)
 from functools import wraps
-# TASK(07)
-from flask import g
-# TASK(08)
-from flask import session
+from flask import g, session
 
-# TASK(05)
-def protected(route_function):
-    @wraps(route_function)
-    # TASK(06)
-    def wrapped_route_function(**kwargs):
+def protected(route_function): # TASK(06)
+    @wraps(route_function) # TASK(07)
+    def wrapped_route_function(**kwargs): # TASK(06)
         # TASK(07)
         if g.user is None:
             return redirect(url_for('admin.login'))
         #/
-        # TASK(06)
-        return route_function(**kwargs)
-    # TASK(06)
-    return wrapped_route_function
+        return route_function(**kwargs) # TASK(06)
+    return wrapped_route_function # TASK(07)
 
 # TASK(08)
 @admin_bp.before_app_request
