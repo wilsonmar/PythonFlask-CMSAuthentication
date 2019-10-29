@@ -46,6 +46,62 @@ def simplify(main):
     _simplify(main)
     return ''.join(buf)
 
+def get_calls(name):
+    calls = []
+    for node in parsed_content(name).find_all(nodes.Call):
+        calls.append(simplify(node))
+    return calls
+
+def select_code(content, start, end):
+    found = False
+    code = []
+
+    if isinstance(content, str):
+        parsed = parsed_content(content)
+    elif isinstance(content, nodes.Node):
+        parsed = content
+    else:
+        return []
+
+    for node in parsed.find_all(nodes.Node):
+        if isinstance(node, nodes.TemplateData) and bool(re.search(start, node.data)):
+            found = True
+
+        if isinstance(node, nodes.TemplateData) and bool(re.search(end, node.data)):
+            found = False
+
+        if found and not isinstance(node, nodes.TemplateData):
+            code.append(node)
+    return code
+
+def template_functions(name, function_name):
+    functions = []
+
+    for call in parsed_content(name).find_all(nodes.Call):
+        if call.node.name == function_name:
+            args_string = ''
+            if isinstance(call.node, nodes.Name) and isinstance(call.args[0], nodes.Name):
+                args_string += call.node.name + ':' + call.args[0].name
+            else:
+                args = getattr(call, 'args')[0]
+                if isinstance(args, nodes.Const):
+                    args_string += args.value + ':'
+                kwargs = call.kwargs[0] if len(getattr(call, 'kwargs')) > 0 else getattr(call, 'kwargs')
+                if isinstance(kwargs, nodes.Keyword):
+                    args_string += kwargs.key + ':'
+                    if isinstance(kwargs.value, nodes.Const):
+                        args_string += kwargs.value.value
+                    else:
+                        if isinstance(kwargs.value, nodes.Name):
+                            args_string += kwargs.value.name
+                        else:
+                            args_string += kwargs.value.node.name
+                            if isinstance(kwargs.value.arg, nodes.Const):
+                                args_string += ':' + kwargs.value.arg.value
+            functions.append(args_string)
+
+    return functions
+
 def get_imports(code, value):
     imports = code.find_all('from_import',  lambda node: ''.join(list(node.value.node_list.map(lambda node: str(node)))) == value).find_all('name_as_name')
     return list(imports.map(lambda node: node.value))
@@ -132,3 +188,4 @@ def get_form_data(code, route, values, name):
     
     assert right or right_get, \
         'Are you setting the `{}` varaible to the correct form data?'.format(name)
+

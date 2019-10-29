@@ -64,7 +64,6 @@ def test_models_password_column_module1():
     assert arguments_exist, \
             'Are you passing the correct arguments to the `db.Column()` function?'
 
-
 @pytest.mark.test_models_check_password_module1
 def test_models_check_password_module1():
     # 2. Models - Check Password
@@ -88,7 +87,7 @@ def test_models_check_password_module1():
     
     def_check_password_exists = def_check_password is not None
     assert def_check_password_exists, \
-        'Have you create a function in the `User` called `check_password`? Do you have the correct parameters?'
+        'Have you created a function in the `User` model called `check_password`? Do you have the correct parameters?'
         
     check_password_return = def_check_password.find('return', lambda node: \
         node.value[0].value == 'check_password_hash' and \
@@ -157,7 +156,7 @@ def test_template_login_form_module1():
 
     submit_exists = len(login_template.select('input[type="submit"][value="Login"].button.is-link')) == 1
     assert submit_exists, \
-        'Have you added a `submit` `<input>` with the correct attributes to the flast control `<div>`?'
+        'Have you added a `submit` `<input>` with the correct attributes to the last control `<div>`?'
 
 @pytest.mark.test_auth_imports_module1
 def test_auth_imports_module1():
@@ -193,14 +192,14 @@ def test_auth_protected_decorator_module1():
         node.arguments[0].target.value == 'route_function')
     def_protected_exists = def_protected is not None
     assert def_protected_exists, \
-        'Have you create a function at the top of `auth.py` called `protected`? Do you have the correct parameters?'
+        'Have you created a function at the top of `auth.py` called `protected`? Do you have the correct parameters?'
     wrapped = def_protected.find('def', lambda node: \
         node.name == 'wrapped_route_function' and \
         node.arguments[0].type == 'dict_argument' and \
         node.arguments[0].value.value == 'kwargs')
     wrapped_exists = wrapped is not None
     assert wrapped_exists, \
-        'Have you create a function in the `protected` function called `wrapped_route_function`? Do you have the correct parameters?'
+        'Have you created a function in the `protected` function called `wrapped_route_function`? Do you have the correct parameters?'
     wrapped_return = wrapped.find('return', lambda node: \
         node.value.type == 'atomtrailers' and \
         node.value.value[0].value == 'route_function' and \
@@ -226,7 +225,7 @@ def test_auth_redirect_user_module1():
     wrapped = def_protected.find('def', name='wrapped_route_function')
     wrapped_exists = wrapped is not None
     assert wrapped_exists, \
-        'Have you create a function in the `protected` function called `wrapped_route_function`? Do you have the correct parameters?'
+        'Have you created a function in the `protected` function called `wrapped_route_function`? Do you have the correct parameters?'
     wrapped.find('decorator', lambda node: \
         str(node.value) == 'wraps' and \
         node.call.value[0].value.value == 'route_function')
@@ -406,7 +405,7 @@ def test_auth_get_user_module1():
         'Are you passing the correct keyword argument to the `User.query.filter_by()` function?'
     first_call = len(filter_by.value) == 6 and filter_by.value[4].value == 'first' and filter_by.value[5].type == 'call'
     assert filter_by_argument, \
-        'Have you a append a call to the `first()` on `User.query.filter_by()` ?'
+        'Have you a append a call to `first()` on `User.query.filter_by()`?'
     check = get_route(auth_code, 'login').find('assign', lambda node: \
         node.target.value == 'check')
     check_exists = check is not None
@@ -527,7 +526,7 @@ def test_auth_logout_route_module1():
         node.parent.call.type == 'call' and \
         rq(node.parent.call.value[0].value.value) == '/logout') is not None
     assert login_decorator, \
-        'Have you add a route decorator to the `logout` route function? Are you passing the correct route pattern?'
+        'Have you added a route decorator to the `logout` route function? Are you passing the correct route pattern?'
     
     clear_call = get_route(auth_code, 'logout').find('atomtrailers', lambda node: \
         node.value[0].value == 'session' and \
@@ -556,6 +555,23 @@ def test_auth_logout_route_module1():
     assert url_content, \
         "Are you passing the `'admin.login'` route to the `url_for()` function?"
 
+    logout_el = template_data('layout').select('a.button.is-light')
+    logout_exists = len(logout_el) == 1
+    assert logout_exists, \
+        'Have you added an `<a>` with the correct attributes to the `navbar-item` `<div>` in `layout.html`?'
+    
+    a_contents_len = len(logout_el[0].contents) >= 1 
+    assert a_contents_len, \
+            'Does your logout link contain the word `Logout`?'
+
+    a_contents = (logout_el[0].contents[0]).lower() == 'logout'
+    assert a_contents, \
+        'Does your logout link contain the word `Logout`?'
+
+    links = 'admin.logout:' in template_functions('layout', 'url_for')
+    assert links, \
+        'Do you have an `href` with a call to `url_for` pointing to `admin.logout`?'
+
 @pytest.mark.test_admin_protect_routes_module1
 def test_admin_protect_routes_module1():
     # 15. Admin - Protect Routes
@@ -576,5 +592,4 @@ def test_admin_protect_routes_module1():
     decorators_exist = function_names == decorators
     assert decorators_exist, \
         'Have you added the `@auth.protected` decorator to the five route functions in `admin/__init.py`?'
-
 #!
