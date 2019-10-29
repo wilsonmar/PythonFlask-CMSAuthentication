@@ -23,10 +23,11 @@ In the body of `check_password` return a call to the `check_password_hash` funct
 There is currently no database for the application. Let's create one and migrate the new scheme that includes our new `password` column. Open a terminal, command propmt, or powershell and `cd` to the root folder of the project.
 
 The `Flask-Migrate` extension should be installed. This exenstion provides several `flask db` commands.
-First, to initialize and configure our schema run the `flask db init` command.
-Second, to create a migration run the `flask db migrate` command.
-Third, to create the database and run the migration use `flask db upgrade`.
-Finally, run this projects custom command `flask add-content` to add content to the database.
+
+- First, to initialize and configure our schema run the `flask db init` command.
+- Second, to create a migration run the `flask db migrate` command.
+- Third, to create the database and run the migration use `flask db upgrade`.
+- Finally, run this projects custom command `flask add-content` to add content to the database.
 
 ## 1.4 - Template: Login Form
 [tag]: # (@pytest.mark.test_template_login_form_module1)
