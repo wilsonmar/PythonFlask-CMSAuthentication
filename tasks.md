@@ -16,7 +16,7 @@ Eventually we are going to need to verify the username and password of a user. T
 
 The best place for a password check is in the `User` model itself. Add a function called `check_password` to the `User` model below the `password` column. Since `check_password` is part of a class pass two parameters, `self` and `value`.
 
-In the body of `check_password` return a call to the `check_password_hash` function. Pass in the new class variable `password` *Hint: self.*, and the `value`.
+In the body of `check_password` return a call to the `check_password_hash` function. Pass in the new class variable `password` (**Hint: self.**), and the `value`.
 
 ## 1.3 - Database Migration
 [tag]: # (@pytest.mark.test_database_migration_module1)
