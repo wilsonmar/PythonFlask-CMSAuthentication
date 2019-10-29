@@ -64,7 +64,6 @@ def test_models_password_column_module1():
     assert arguments_exist, \
             'Are you passing the correct arguments to the `db.Column()` function?'
 
-
 @pytest.mark.test_models_check_password_module1
 def test_models_check_password_module1():
     # 2. Models - Check Password
@@ -576,5 +575,4 @@ def test_admin_protect_routes_module1():
     decorators_exist = function_names == decorators
     assert decorators_exist, \
         'Have you added the `@auth.protected` decorator to the five route functions in `admin/__init.py`?'
-
 #!
