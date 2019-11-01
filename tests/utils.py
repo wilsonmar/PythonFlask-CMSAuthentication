@@ -123,11 +123,14 @@ def get_conditional(code, values, type, nested=False):
 def rq(string):
     return re.sub(r'(\'|")', '', str(string))
 
-def get_route(code, route):
+def get_route(code, route, parent_name='protected'):
     route_function = code.find('def', name=route)
     route_function_exists = route_function is not None
     assert route_function_exists, \
-        'Does the `{}` route function exist in `cms/admin/__init__.py`?'.format(route)
+        'Does the `{}` route function exist in `cms/admin/auth.py`?'.format(route)
+    in_protected = (route_function.parent.type == 'def' and route_function.parent.name == parent_name) is not True
+    assert in_protected, \
+        'The `{}` route function should be outside of the `protected` function.'.format(route)
     return route_function
 
 def get_methods_keyword(code, route):
