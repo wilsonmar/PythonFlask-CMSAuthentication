@@ -269,7 +269,10 @@ def test_auth_load_user_module1():
     #     user_id = session.get('user_id')
     #     g.user = User.query.get(user_id) if user_id is not None else None
     load_user = auth_code.find('def', name='load_user')
-    in_protected = (load_user.parent.type == 'def' and load_user.parent.name == 'protected') is not True
+
+    in_protected = isinstance(load_user.parent, redbaron.redbaron.RedBaron) or \
+        (load_user.parent.type == 'def' and load_user.parent.name == 'protected') is not True
+
     assert in_protected, \
         'The `load_user` function should be outside of the `protected` function.'
     load_user_exists = load_user is not None
