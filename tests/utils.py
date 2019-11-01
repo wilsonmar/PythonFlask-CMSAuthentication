@@ -1,4 +1,5 @@
 import re
+import redbaron
 from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, exceptions, meta, nodes
 
@@ -128,7 +129,9 @@ def get_route(code, route, parent_name='protected'):
     route_function_exists = route_function is not None
     assert route_function_exists, \
         'Does the `{}` route function exist in `cms/admin/auth.py`?'.format(route)
-    in_protected = (route_function.parent.type == 'def' and route_function.parent.name == parent_name) is not True
+
+    in_protected = isinstance(route_function.parent, redbaron.redbaron.RedBaron) or \
+        (route_function.parent.type == 'def' and route_function.parent.name == parent_name) is not True
     assert in_protected, \
         'The `{}` route function should be outside of the `protected` function.'.format(route)
     return route_function
