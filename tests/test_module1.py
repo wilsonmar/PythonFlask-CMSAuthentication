@@ -410,7 +410,7 @@ def test_auth_get_user_module1():
     assert filter_by_argument, \
         'Are you passing the correct keyword argument to the `User.query.filter_by()` function?'
     first_call = len(filter_by.value) == 6 and filter_by.value[4].value == 'first' and filter_by.value[5].type == 'call'
-    assert filter_by_argument, \
+    assert first_call, \
         'Have you a append a call to `first()` on `User.query.filter_by()`?'
     check = get_route(auth_code, 'login').find('assign', lambda node: \
         node.target.value == 'check')
@@ -424,7 +424,7 @@ def test_auth_get_user_module1():
         node.value[2].value[0].value.value == 'password'
         ) is not None
     assert check_password_call, \
-        'Are you calling the `user.check_password()` function and assigning the result to `check`?'
+        'Are you calling the `user.check_password()` function and assigning the result to `check`? Also make sure you pass `password` as the first argument.'
 
 @pytest.mark.test_auth_validate_form_data_module1
 def test_auth_validate_form_data_module1():
