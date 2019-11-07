@@ -269,21 +269,27 @@ def test_auth_load_user_module1():
     #     user_id = session.get('user_id')
     #     g.user = User.query.get(user_id) if user_id is not None else None
     load_user = auth_code.find('def', name='load_user')
-
-    in_protected = isinstance(load_user.parent, redbaron.redbaron.RedBaron) or \
-        (load_user.parent.type == 'def' and load_user.parent.name == 'protected') is not True
-
-    assert in_protected, \
-        'The `load_user` function should be outside of the `protected` function.'
     load_user_exists = load_user is not None
     assert load_user_exists, \
         'Have you created a function called `load_user`?'
-    type = load_user.find('assign', lambda node: \
-        node.target.value == 'user_id')
-    type_exists = type is not None
-    assert type_exists, \
+
+    in_protected = isinstance(load_user.parent, redbaron.redbaron.RedBaron) or \
+        (load_user.parent.type == 'def' and load_user.parent.name == 'protected') is not True
+    assert in_protected, \
+        'The `load_user` function should be outside of the `protected` function.'
+
+    decorator_exists = load_user.find('decorator', lambda node: node.find('dotted_name', lambda node: \
+          node.value[0].value == 'admin_bp' and \
+          node.value[1].type == 'dot' and \
+          node.value[2].value == 'before_app_request')) is not None
+    assert decorator_exists, \
+        'The `load_user` function should have a decorator of `@admin_bp.before_app_request`.'
+
+    user_id = load_user.find('assign', lambda node: node.target.value == 'user_id')
+    user_id_exists = user_id is not None
+    assert user_id_exists, \
         'Are you setting the `user_id` variable correctly?'
-    get_call = type.find('atomtrailers', lambda node: \
+    get_call = user_id.find('atomtrailers', lambda node: \
         node.value[0].value == 'session' and \
         node.value[1].value == 'get' and \
         node.value[2].type == 'call'
