@@ -112,7 +112,7 @@ def get_conditional(code, values, type, nested=False):
         if node.type == 'comparison':
             return '{}:{}:{}'.format(str(node.first).replace("'", '"'), str(node.value).replace(' ', ':'), str(node.second).replace("'", '"'))
         elif node.type == 'unitary_operator':
-            return '{}:{}'.format(str(node.value), str(node.target).replace("'", '"'))
+            return '{}:{}'.format(str(node.value), str(node.target).replace("'", '"').replace(' ', ''))
 
     nodes = code.value if nested else code
     for value in values:
