@@ -22,8 +22,8 @@ def content(type):
     else:
         abort(404)
 
-# TASK(15)
 @admin_bp.route('/create/<type>', methods=('GET', 'POST'))
+# TASK(15)
 @auth.protected
 def create(type):
     if requested_type(type):
