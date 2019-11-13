@@ -394,7 +394,6 @@ def test_auth_post_request_module1():
 def test_auth_get_user_module1():
     # 11. Auth - Get User
     # user = User.query.filter_by(username=username).first()
-    # check = user.check_password(password)
     user = get_route(auth_code, 'login').find('assign', lambda node: \
         node.target.value == 'user')
     user_exists = user is not None
@@ -418,19 +417,19 @@ def test_auth_get_user_module1():
     first_call = len(filter_by.value) == 6 and filter_by.value[4].value == 'first' and filter_by.value[5].type == 'call'
     assert first_call, \
         'Have you a append a call to `first()` on `User.query.filter_by()`?'
-    check = get_route(auth_code, 'login').find('assign', lambda node: \
-        node.target.value == 'check')
-    check_exists = check is not None
-    assert check_exists, \
-        'Are you setting the `check` variable correctly?'
-    check_password_call = check.find('atomtrailers', lambda node: \
-        node.value[0].value == 'user' and \
-        node.value[1].value == 'check_password' and \
-        node.value[2].type == 'call' and \
-        node.value[2].value[0].value.value == 'password'
-        ) is not None
-    assert check_password_call, \
-        'Are you calling the `user.check_password()` function and assigning the result to `check`? Also make sure you pass `password` as the first argument.'
+    # check = get_route(auth_code, 'login').find('assign', lambda node: \
+    #     node.target.value == 'check')
+    # check_exists = check is not None
+    # assert check_exists, \
+    #     'Are you setting the `check` variable correctly?'
+    # check_password_call = check.find('atomtrailers', lambda node: \
+    #     node.value[0].value == 'user' and \
+    #     node.value[1].value == 'check_password' and \
+    #     node.value[2].type == 'call' and \
+    #     node.value[2].value[0].value.value == 'password'
+    #     ) is not None
+    # assert check_password_call, \
+    #     'Are you calling the `user.check_password()` function and assigning the result to `check`? Also make sure you pass `password` as the first argument.'
 
 @pytest.mark.test_auth_validate_form_data_module1
 def test_auth_validate_form_data_module1():
@@ -449,7 +448,8 @@ def test_auth_validate_form_data_module1():
     assert user_error_message_exists, \
         'Are you setting the `error` variable to the appropriate `string` in the `if` statement.'
 
-    check_error = get_conditional(get_request_method(auth_code, 'login'), ['not:check', 'check:is:None', 'check:==:None', 'check:is:""', 'check:==:""'], 'elif', True)
+    # check_error = get_conditional(get_request_method(auth_code, 'login'), ['not:check', 'check:is:None', 'check:==:None', 'check:is:""', 'check:==:""'], 'elif', True)
+    check_error = get_conditional(get_request_method(auth_code, 'login'), ['not:user.check_password(password)'], 'elif', True)
 
     check_elif_exists = check_error is not None
     assert check_elif_exists, \
