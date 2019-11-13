@@ -590,4 +590,40 @@ def test_admin_protect_routes_module1():
     decorators_exist = function_names == decorators
     assert decorators_exist, \
         'Have you added the `@auth.protected` decorator to the five route functions in `admin/__init.py`?'
+
+    content_last_decorator = admin_module_code.find('def', lambda node: \
+        node.name == 'content' and \
+        str(node.decorators[-1].value) == 'auth.protected'
+        ) is not None
+    assert content_last_decorator, \
+        'Is the `@auth.protected` decorator immediately above the `content` function?'
+
+    create_last_decorator = admin_module_code.find('def', lambda node: \
+        node.name == 'create' and \
+        str(node.decorators[-1].value) == 'auth.protected'
+        ) is not None
+    assert create_last_decorator, \
+        'Is the `@auth.protected` decorator immediately above the `create` function?'
+
+    edit_last_decorator = admin_module_code.find('def', lambda node: \
+        node.name == 'edit' and \
+        str(node.decorators[-1].value) == 'auth.protected'
+        ) is not None
+    assert edit_last_decorator, \
+        'Is the `@auth.protected` decorator immediately above the `edit` function?'
+
+    settings_last_decorator = admin_module_code.find('def', lambda node: \
+        node.name == 'settings' and \
+        str(node.decorators[-1].value) == 'auth.protected'
+        ) is not None
+    assert settings_last_decorator, \
+        'Is the `@auth.protected` decorator immediately above the `settings` function?'
+
+    users_last_decorator = admin_module_code.find('def', lambda node: \
+        node.name == 'users' and \
+        str(node.decorators[-1].value) == 'auth.protected'
+        ) is not None
+    assert users_last_decorator, \
+        'Is the `@auth.protected` decorator immediately above the `users` function?'
+
 #!
