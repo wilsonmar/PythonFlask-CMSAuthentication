@@ -30,6 +30,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         error = None
+
         # TASK(11)
         user = User.query.filter_by(username=username).first()
 
